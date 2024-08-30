@@ -47,8 +47,9 @@ A estrutura de arquivos do projeto é a seguinte:
 quantidade_de_tarefas tempo_de_simulacao tick_do_sistema
 nome_tarefa1 custo1 periodo1
 nome_tarefa2 custo2 periodo2
-```
 ...
+```
+
 
 # Exemplo
 ```bash

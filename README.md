@@ -43,9 +43,11 @@ Ou qualquer outro arquivo de entrada que desejar.
 # Estrutura de arquivos
 A estrutura de arquivos do projeto é a seguinte:
 
+```yaml
 quantidade_de_tarefas tempo_de_simulacao tick_do_sistema
-nome_tarefa1 periodo1 deadline1
-nome_tarefa2 periodo2 deadline2
+nome_tarefa1 custo1 periodo1
+nome_tarefa2 custo2 periodo2
+```
 ...
 
 # Exemplo

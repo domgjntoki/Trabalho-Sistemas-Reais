@@ -7,6 +7,10 @@ import argparse
 
 @dataclass
 class Task:
+    """
+    Representa uma tarefa com informações sobre seu nome, período, custo, 
+    tempo de início, tempo restante, deadline e função de prioridade.
+    """
     name: str
     period: int
     cost: int
@@ -16,68 +20,125 @@ class Task:
     priority_function = lambda x: 1 / x.period
 
     @property
-    def priority(self):
+    def priority(self) -> float:
+        """
+        Calcula a prioridade da tarefa com base na função de prioridade definida.
+        """
         return self.priority_function(self)
 
-    def start_task(self, time):
+    def start_task(self, time: int) -> None:
+        """
+        Marca o tempo que a tarefa começou a rodar e calcula o deadline.
+
+        Args:
+            time (int): Tempo atual do sistema.
+        """
         self.deadline = time + self.period
 
-    def run_task(self, time):
-        self.started_at = time
+    def run_task(self, time: int) -> None:
+        """
+        Inicia a tarefa e marca o tempo que ela começou a rodar.
 
+        Args:
+            time (int): Tempo atual do sistema.
+        """
+        self.started_at = time
         if self.remaining_time == 0:
             self.remaining_time = self.cost
-            
-    
-    def interrupt_task(self, time, system_tick):
-        # Update the remaining time of the task
-        # Compensate for the time that has passed since the task started
+
+    def interrupt_task(self, time: int, system_tick: int) -> None:
+        """
+        Interrompe a tarefa e compensa o tempo que ela já rodou.
+
+        Args:
+            time (int): Tempo atual do sistema.
+            system_tick (int): Duração do tick do sistema.
+        """
         self.remaining_time -= time - self.started_at + system_tick    
 
-    def end_task(self, time):
+    def end_task(self, time: int) -> None:
+        """
+        Finaliza a tarefa, zerando o tempo restante.
+
+        Args:
+            time (int): Tempo atual do sistema.
+        """
         self.remaining_time = 0
 
-    def set_priority_function(self, priority_function):
+    def set_priority_function(self, priority_function) -> None:
+        """
+        Define a função de prioridade para a tarefa.
+
+        Args:
+            priority_function: Função que calcula a prioridade da tarefa.
+        """
         self.priority_function = priority_function
 
 
-class DeadlineTaskQueue:
-    def __init__(self):
+class TaskQueue:
+    """
+    Classe que gerencia uma fila de tarefas usando o algoritmo de deadline.
+    """
+    def __init__(self) -> None:
         self.queue = []
 
-    def put(self, task: Task):
+    def put(self, task: Task) -> None:
         self.queue.append(task)
         
-    def get(self):
+    def get(self) -> Task:
+        """
+        Obtém a tarefa com a maior prioridade (menor deadline).
+
+        Returns:
+            Task: A tarefa com a maior prioridade.
+        """
         if not self.queue:
             return None
         task = min(self.queue, key=lambda x: x.priority)
         self.queue.remove(task)
         return task
     
-    def empty(self):
+    def empty(self) -> bool:
         return len(self.queue) == 0
     
-    def peek(self):
+    def peek(self) -> Task:
+        """
+        Visualiza a tarefa com a maior prioridade sem removê-la da fila.
+
+        Returns:
+            Task: A tarefa com a maior prioridade.
+        """
         return min(self.queue, key=lambda x: x.priority)
     
+    def check_deadlines(self, time: int) -> Task:
+        """
+        Verifica se há alguma tarefa que perdeu seu deadline.
 
-class RateMonotonicTaskQueue(queue.PriorityQueue):
-    def put(self, task: Task):
-        super().put((task.priority, task))
-        
-    def get(self):
-        _, task = super().get()
-        return task
-    
-    def peek(self):
-        _, task = self.queue[0]
-        return task
+        Args:
+            time (int): Tempo atual do sistema.
+
+        Returns:
+            Task: A tarefa que perdeu o deadline, se houver.
+        """
+        for task in self.queue:
+            if task.deadline < time:
+                return task
+        return None
 
 
 def from_args(args, tasks):
+    """
+    Processa os argumentos e cria as tarefas e a fila de tarefas apropriada.
+
+    Args:
+        args (argparse.Namespace): Argumentos passados pela linha de comando.
+        tasks (list[Task]): Lista de tarefas que será preenchida.
+
+    Returns:
+        tuple: Contém o tempo de simulação, tick do sistema e a fila de tarefas.
+    """
     with open(args.file, "r") as file:
-    # until the end of the file
+        # Lê cada linha do arquivo e cria as tarefas
         for line in file:
             name, cost, period = line.split()
             tasks.append(Task(name=name, period=int(period), cost=int(cost)))
@@ -89,20 +150,19 @@ def from_args(args, tasks):
 
     system_tick = args.tick
 
-
-
+    q = TaskQueue()
+    # Seleciona o algoritmo de escalonamento
     if args.algorithm == "edf":
-       q = DeadlineTaskQueue()
        for task in tasks:
             task.set_priority_function(lambda x: x.deadline)
     else:
-        q = RateMonotonicTaskQueue()
         for task in tasks:
             task.set_priority_function(lambda x: x.period)
         
-    return simulated_time,system_tick,q
+    return simulated_time, system_tick, q
 
 
+# Configura o parser de argumentos da linha de comando
 parser = argparse.ArgumentParser(description='Simula um escalonador de tarefas')
 parser.add_argument('--file', '-f', type=str, required=True, help='Caminho para o arquivo de entrada')
 parser.add_argument('--time', '-t', type=int, required=False, help='Tempo de simulação')
@@ -112,59 +172,65 @@ args = parser.parse_args()
 
 tasks = []
 
+# Inicializa as tarefas e a fila de tarefas
 simulated_time, system_tick, q = from_args(args, tasks)
 
+# Inicia a simulação do escalonador
 time = 0
 current_task = None
 df = pd.DataFrame([])
 while time < simulated_time:
-    # Simulate time
+    # Simula o tempo
     if current_task:
         current_task.remaining_time -= system_tick
-    # Check if the current task has finished
+
+    # Verifica se a tarefa atual terminou
     if current_task and current_task.remaining_time <= 0:
         current_task.end_task(time)
         df = pd.concat([df, pd.DataFrame({'Task': [current_task.name], 'Start': [current_task.started_at], 'Finish': [time]})])
-        #print(f"Task {current_task.name} finished at {time}")
         current_task = None
     
-    # Start tasks at their period
+    # Inicia as tarefas em seu período
     for task in tasks:
         if time == 0 or time % task.period == 0:
             task.start_task(time)
             q.put(task)
 
-    # If there is no current task, get the next one
+    # Se não há tarefa atual, obtém a próxima
     if not current_task and not q.empty():
         current_task = q.get()
         current_task.run_task(time)
     
-
-    # Check if there is a higher priority task
+    # Verifica se há uma tarefa de maior prioridade
     if not q.empty():
         next_task = q.peek()
         if next_task.priority < current_task.priority:
             current_task.interrupt_task(time, system_tick)
-            q.put(current_task) # Put the current task back in the queue
+            q.put(current_task) # Coloca a tarefa atual de volta na fila
             df = pd.concat([df, pd.DataFrame({'Task': [current_task.name], 'Start': [current_task.started_at], 'Finish': [time]})])
-            #print(f"Task {current_task.name} finished at {time}")
             current_task = next_task
             current_task.run_task(time)
             q.get()
 
-    
+    # Verifica se alguma tarefa perdeu o deadline
+    missed_task = q.check_deadlines(time)
+
+    if missed_task:
+        print(f"Task {missed_task.name} missed its deadline at {time}")
     time += system_tick
 
-# if there is a task, end it and add it to the dataframe
+# Se ainda há uma tarefa, finaliza e adiciona ao dataframe
 if current_task:
     current_task.end_task(time)
     df = pd.concat([df, pd.DataFrame({'Task': [current_task.name], 'Start': [current_task.started_at], 'Finish': [time]})])
     #print(f"Task {current_task.name} finished at {time}")
 
+# Verifica se há tarefas para exibir
 if df.empty:
     print("No tasks were scheduled")
     exit()
 
+# Define uma lista de cores em formato RGB para diferenciar visualmente as tarefas no gráfico.
 color_rotation = ['rgb(0, 0, 255)', 'rgb(122, 122, 122)', 'rgb(255, 0, 0)', 'rgb(122, 122, 0)', 'rgb(255, 0, 255)', 'rgb(0, 255, 255)']
 colors = {task.name: color_rotation[i % len(color_rotation)] for i, task in enumerate(tasks)}
 fig = ff.create_gantt(df, bar_width = 0.4, show_colorbar=True,  group_tasks=True, index_col='Task', showgrid_x=True,
@@ -206,7 +272,7 @@ fig.update_layout(
     )
 )
 
-
+# Adiciona linhas verticais no gráfico para indicar os períodos de cada tarefa:
 for i, task in enumerate(tasks):
     for period in range(0, simulated_time, task.period):
         fig.add_shape(

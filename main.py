@@ -260,10 +260,6 @@ fig = ff.create_gantt(df, bar_width = 0.4, show_colorbar=True,  group_tasks=True
                       colors=colors)                       
 subtitle = "<b>Tasks:</b> " + ", ".join([f"<span style='color:{colors[task.name]}'>{task.name}({task.cost}, {task.period})</span>" for task in tasks])
 
-# Adiciona anotação, explicando que triangulos representam deadlines perdidos
-# Com desenho de um triângulo
-
-
 
 if args.algorithm == "rm":
     title = "Rate Monotonic"

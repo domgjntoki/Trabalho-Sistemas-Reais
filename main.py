@@ -17,7 +17,7 @@ class Task:
     started_at: int = 0
     remaining_time: int = 0
     deadline: int = 0
-    priority_function = lambda x: 1 / x.period
+    priority_function = lambda x: x.period
 
     @property
     def priority(self) -> float:

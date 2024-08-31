@@ -28,7 +28,7 @@ pip install -r requirements.txt
 # Execução
 ## Argumentos para o programa
 ```bash
-python main.py [-h] --file FILE --time TIME [--tick TICK] [--algorithm {rm,edf}]
+usage: main.py [-h] --file FILE [--time TIME] [--tick TICK] [--algorithm {rm,edf}]
 Simula um escalonador de tarefas
 
 options:

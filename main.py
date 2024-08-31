@@ -10,14 +10,14 @@ class Task:
     name: str
     period: int
     cost: int
-
     started_at: int = 0
     remaining_time: int = 0
     deadline: int = 0
+    priority_function = lambda x: 1 / x.period
 
     @property
     def priority(self):
-        return self.deadline
+        return self.priority_function(self)
 
     def start_task(self, time):
         self.deadline = time + self.period
@@ -36,6 +36,9 @@ class Task:
 
     def end_task(self, time):
         self.remaining_time = 0
+
+    def set_priority_function(self, priority_function):
+        self.priority_function = priority_function
 
 
 class DeadlineTaskQueue:
@@ -61,7 +64,7 @@ class DeadlineTaskQueue:
 
 class RateMonotonicTaskQueue(queue.PriorityQueue):
     def put(self, task: Task):
-        self.put((task.priority, task))
+        super().put((task.priority, task))
         
     def get(self):
         _, task = super().get()
@@ -72,7 +75,7 @@ class RateMonotonicTaskQueue(queue.PriorityQueue):
         return task
 
 
-def from_args(DeadlineTaskQueue, RateMonotonicTaskQueue, args, tasks):
+def from_args(args, tasks):
     with open(args.file, "r") as file:
     # until the end of the file
         for line in file:
@@ -88,10 +91,15 @@ def from_args(DeadlineTaskQueue, RateMonotonicTaskQueue, args, tasks):
 
 
 
-    if args.algorithm == "rate_monotonic":
-        q = RateMonotonicTaskQueue()
+    if args.algorithm == "edf":
+       q = DeadlineTaskQueue()
+       for task in tasks:
+            task.set_priority_function(lambda x: x.deadline)
     else:
-        q = DeadlineTaskQueue()
+        q = RateMonotonicTaskQueue()
+        for task in tasks:
+            task.set_priority_function(lambda x: x.period)
+        
     return simulated_time,system_tick,q
 
 
@@ -104,7 +112,7 @@ args = parser.parse_args()
 
 tasks = []
 
-simulated_time, system_tick, q = from_args(DeadlineTaskQueue, RateMonotonicTaskQueue, args, tasks)
+simulated_time, system_tick, q = from_args(args, tasks)
 
 time = 0
 current_task = None
@@ -146,6 +154,12 @@ while time < simulated_time:
 
     
     time += system_tick
+
+# if there is a task, end it and add it to the dataframe
+if current_task:
+    current_task.end_task(time)
+    df = pd.concat([df, pd.DataFrame({'Task': [current_task.name], 'Start': [current_task.started_at], 'Finish': [time]})])
+    #print(f"Task {current_task.name} finished at {time}")
 
 if df.empty:
     print("No tasks were scheduled")

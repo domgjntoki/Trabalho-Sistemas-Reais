@@ -42,7 +42,7 @@ options:
 
 ## Exemplo de execução
 ```bash
-python deadline_driven.py -f in -t 100 -a edf --tick 1
+python main.py -f in -t 100 -a edf --tick 1
 ```
 
 # Estrutura de arquivos

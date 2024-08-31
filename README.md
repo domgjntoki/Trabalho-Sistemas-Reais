@@ -44,7 +44,6 @@ Ou qualquer outro arquivo de entrada que desejar.
 A estrutura de arquivos do projeto é a seguinte:
 
 ```yaml
-quantidade_de_tarefas tempo_de_simulacao tick_do_sistema
 nome_tarefa1 custo1 periodo1
 nome_tarefa2 custo2 periodo2
 ...
@@ -53,9 +52,27 @@ nome_tarefa2 custo2 periodo2
 
 # Exemplo
 ```bash
-4 500 1
 T1 30 100
 T2 35 175
 T3 25 200
 T4 30 300
+```
+
+# Argumentos para o programa
+```bash
+python deadline_driven.py [-h] --file FILE --time TIME [--tick TICK] [--algorithm {rm,edf}]
+Simula um escalonador de tarefas
+
+options:
+  -h, --help            show this help message and exit
+  --file FILE, -f FILE  Caminho para o arquivo de entrada
+  --time TIME, -t TIME  Tempo de simulação
+  --tick TICK           Tick do sistema
+  --algorithm {rm,edf}, -a {rm,edf}
+                        Algoritmo de escalonamento
+```
+
+# Exemplo de execução
+```bash
+python deadline_driven.py -f in -t 100 -a edf --tick 1
 ```

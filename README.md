@@ -26,39 +26,7 @@ pip install -r requirements.txt
 ```
 
 # Execução
-Para executar o projeto, siga os passos abaixo:
-
-```bash
-python rate_monotonic.py < in
-```
-
-ou 
-
-```bash
-python deadline_driven.py < in
-```
-
-Ou qualquer outro arquivo de entrada que desejar.
-
-# Estrutura de arquivos
-A estrutura de arquivos do projeto é a seguinte:
-
-```yaml
-nome_tarefa1 custo1 periodo1
-nome_tarefa2 custo2 periodo2
-...
-```
-
-
-# Exemplo
-```bash
-T1 30 100
-T2 35 175
-T3 25 200
-T4 30 300
-```
-
-# Argumentos para o programa
+## Argumentos para o programa
 ```bash
 python deadline_driven.py [-h] --file FILE --time TIME [--tick TICK] [--algorithm {rm,edf}]
 Simula um escalonador de tarefas
@@ -72,7 +40,25 @@ options:
                         Algoritmo de escalonamento
 ```
 
-# Exemplo de execução
+## Exemplo de execução
 ```bash
 python deadline_driven.py -f in -t 100 -a edf --tick 1
+```
+
+# Estrutura de arquivos
+A estrutura de arquivos do projeto é a seguinte:
+
+```yaml
+nome_tarefa1 custo1 periodo1
+nome_tarefa2 custo2 periodo2
+...
+```
+
+
+## Exemplo
+```bash
+T1 30 100
+T2 35 175
+T3 25 200
+T4 30 300
 ```

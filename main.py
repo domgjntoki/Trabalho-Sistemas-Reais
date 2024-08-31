@@ -105,7 +105,7 @@ def from_args(args, tasks):
 
 parser = argparse.ArgumentParser(description='Simula um escalonador de tarefas')
 parser.add_argument('--file', '-f', type=str, required=True, help='Caminho para o arquivo de entrada')
-parser.add_argument('--time', '-t', type=int, required=True, help='Tempo de simulação')
+parser.add_argument('--time', '-t', type=int, required=False, help='Tempo de simulação')
 parser.add_argument('--tick', type=int, required=False, help='Tick do sistema', default=1)
 parser.add_argument('--algorithm', '-a', choices=['rm', 'edf'], required=False, help='Algoritmo de escalonamento', default='rm')
 args = parser.parse_args()

@@ -28,7 +28,8 @@ pip install -r requirements.txt
 # Execução
 ## Argumentos para o programa
 ```bash
-usage: main.py [-h] --file FILE [--time TIME] [--tick TICK] [--algorithm {rm,edf}]
+usage: main.py [-h] --file FILE [--time TIME] [--tick TICK] [--algorithm {rm,edf}] [--output OUTPUT]
+
 Simula um escalonador de tarefas
 
 options:
@@ -38,11 +39,20 @@ options:
   --tick TICK           Tick do sistema
   --algorithm {rm,edf}, -a {rm,edf}
                         Algoritmo de escalonamento
+  --output OUTPUT, -o OUTPUT
+                        Caminho para o arquivo de saída em formato PNG
+
 ```
+Por padrão,
+- time: Período da maior task + 1
+- tick: 1
+- algorithm: rm (Rate monotonic)
+- output: Vazio, logo gera um gráfico interativo.
+
 
 ## Exemplo de execução
 ```bash
-python main.py -f in -t 100 -a edf --tick 1
+python main.py -f in -t 100 -a edf --tick 1 -o out.png
 ```
 
 # Estrutura de arquivos

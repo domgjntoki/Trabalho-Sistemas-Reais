@@ -30,7 +30,7 @@ options:
 ```
 Por padrão,
 - time: Período da maior task + 1
-- tick: 1
+- tick: Maior divisor comum entre os períodos e custos
 - algorithm: rm (Rate monotonic)
 - output: Vazio, logo gera um gráfico interativo.
 

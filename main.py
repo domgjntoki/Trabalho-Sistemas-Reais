@@ -3,6 +3,7 @@ import plotly.figure_factory as ff
 from dataclasses import dataclass
 import argparse
 from typing import Generator, Optional
+import math
 
 
 
@@ -158,7 +159,12 @@ def from_args(args, tasks):
     else:
         simulated_time = max(task.period for task in tasks) + 1
 
-    system_tick = args.tick
+    if args.tick:
+        system_tick = args.tick
+    else:
+        # O tick deve ser por padrão o maior divisor comum dos periodos e custos
+        system_tick =  math.gcd(*[task.period for task in tasks] + [task.cost for task in tasks])
+
 
     q = TaskQueue()
     # Seleciona o algoritmo de escalonamento
@@ -185,7 +191,7 @@ def add_to_pd(df, task, start, finish):
 parser = argparse.ArgumentParser(description='Simula um escalonador de tarefas')
 parser.add_argument('--file', '-f', type=str, required=True, help='Caminho para o arquivo de entrada')
 parser.add_argument('--time', '-t', type=int, required=False, help='Tempo de simulação')
-parser.add_argument('--tick', type=int, required=False, help='Tick do sistema', default=1)
+parser.add_argument('--tick', type=int, required=False, help='Tick do sistema')
 parser.add_argument('--algorithm', '-a', choices=['rm', 'edf'], required=False, help='Algoritmo de escalonamento', default='rm')
 parser.add_argument('--output', '-o', type=str, required=False, help='Caminho para o arquivo de saída em formato PNG')
 args = parser.parse_args()
@@ -241,8 +247,6 @@ while time < simulated_time:
     if not q.empty():
         next_task = q.peek()
         if next_task < current_task:
-            print(f"Interrupting task {current_task.name} for {next_task.name} at time {time}")
-            print(f"{next_task} < {current_task}")
             current_task.interrupt_task(time, system_tick)
             q.put(current_task) # Coloca a tarefa atual de volta na fila
             df = add_to_pd(df, current_task, current_task.started_at, time)
@@ -310,7 +314,7 @@ fig.update_layout(
         tickvals=[period for task in tasks for period in range(0, simulated_time, task.period)],
         ticktext=[str(period) for task in tasks for period in range(0, simulated_time, task.period)],
         rangeslider=dict( # Adiciona um slider para zoom
-            visible=simulated_time >= 30 and not args.output,
+            visible=simulated_time >= 30 * system_tick and not args.output,
             
             ),  #
         range=(0, min(30 * system_tick, simulated_time)) if not args.output else (0, simulated_time),

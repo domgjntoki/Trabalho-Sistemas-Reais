@@ -187,6 +187,7 @@ parser.add_argument('--file', '-f', type=str, required=True, help='Caminho para 
 parser.add_argument('--time', '-t', type=int, required=False, help='Tempo de simulação')
 parser.add_argument('--tick', type=int, required=False, help='Tick do sistema', default=1)
 parser.add_argument('--algorithm', '-a', choices=['rm', 'edf'], required=False, help='Algoritmo de escalonamento', default='rm')
+parser.add_argument('--output', '-o', type=str, required=False, help='Caminho para o arquivo de saída em formato PNG')
 args = parser.parse_args()
 
 tasks = []
@@ -218,6 +219,9 @@ while time < simulated_time:
      # Verifica se alguma tarefa perdeu o deadline
     if current_task and current_task.deadline <= time:
         missed_tasks.append((current_task, time))
+        current_task.end_task(time)
+        df = add_to_pd(df, current_task, current_task.started_at, time)
+        current_task = None
 
     for missed_task in q.yield_lost_deadlines(time):
         missed_tasks.append((missed_task, time))
@@ -237,6 +241,7 @@ while time < simulated_time:
     if not q.empty():
         next_task = q.peek()
         if next_task < current_task:
+            print(f"Interrupting task {current_task.name} for {next_task.name} at time {time}")
             print(f"{next_task} < {current_task}")
             current_task.interrupt_task(time, system_tick)
             q.put(current_task) # Coloca a tarefa atual de volta na fila
@@ -278,7 +283,7 @@ else:
 fig.update_layout(
     xaxis_type='linear',
     #autosize=False,
-    width=900,
+    width=900 if not args.output else 900 * simulated_time // 30,
     height=600,
     #margin=dict(t=100, b=100),
     title={
@@ -305,10 +310,10 @@ fig.update_layout(
         tickvals=[period for task in tasks for period in range(0, simulated_time, task.period)],
         ticktext=[str(period) for task in tasks for period in range(0, simulated_time, task.period)],
         rangeslider=dict( # Adiciona um slider para zoom
-            visible=simulated_time >= 30,
+            visible=simulated_time >= 30 and not args.output,
             
             ),  #
-        range=(0, min(30 * system_tick, simulated_time)),
+        range=(0, min(30 * system_tick, simulated_time)) if not args.output else (0, simulated_time),
         #autorange=False  # Previne o zoom automático
     ),
    # Custom legend names
@@ -347,17 +352,12 @@ for i, task in enumerate(tasks):
 for missed_task, time in missed_tasks:
     deadline_time = time
 
-    print(f"Tarefa {missed_task.name} perdeu o deadline em {time}")
     # Calcula a posição do triângulo baseado na tarefa que falhou
     task_position = next(((len(tasks) - i -0.75) for i, task in enumerate(tasks) if task.name == missed_task.name), 0)  # Aqui você pode ajustar a posição com base na tarefa
 
     m1,m2 = deadline_time-0.2 * system_tick, task_position-0.2
     l1,l2 = deadline_time+0.2 * system_tick, task_position-0.2
     z1,z2 = deadline_time, task_position-0.4
-    
-    print(f"m1: {m1}, m2: {m2}")
-    print(f"l1: {l1}, l2: {l2}")
-    print(f"z1: {z1}, z2: {z2}")
 
     fig.add_shape(
         type="path",
@@ -367,32 +367,9 @@ for missed_task, time in missed_tasks:
         line=dict(color='black', width=1),
     )
 
-# fig.update_layout(
-#     yaxis=dict(scaleanchor="x"),
-# )
-
-# Create animation for the chart
-fig.update_layout(
-    updatemenus=[
-        dict(
-            type="buttons",
-            showactive=False,
-            buttons=[
-                dict(
-                    label="Play",
-                    method="animate",
-                    args=[None, dict(frame=dict(duration=1000, redraw=True), fromcurrent=True)],
-                ),
-                dict(
-                    label="Pause",
-                    method="animate",
-                    args=[[None], dict(frame=dict(duration=0, redraw=True), mode="immediate")],
-                ),
-            ],
-        )
-    ],
-)
-
 
 # Save the figure png
-fig.show()
+if args.output:
+    fig.write_image(args.output)
+else:
+    fig.show()

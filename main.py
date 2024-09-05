@@ -129,7 +129,7 @@ class TaskQueue:
             time (int): Tempo atual do sistema.
 
         Yields:
-            Task: Tarefa que perderam o deadline.
+            Task: Tarefas que perderam o deadline.
         """
         for task in self.queue:
             if task.deadline <= time:

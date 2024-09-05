@@ -4,21 +4,6 @@ Trabalho de sistemas reais, simulando o algorítimo Rate monotonic e Deadline Dr
 # Instalação
 Para instalar o projeto, siga os passos abaixo:
 
-## CMD
-```cmd
-python -m venv .env
-.env\Scripts\activate
-pip install -r requirements.txt
-```
-
-## Powershell
-```powershell
-python -m venv .env
-.\.env\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
-
-## Bash, git bash
 ```bash
 python -m venv .env
 source .env/Scripts/activate

@@ -135,8 +135,6 @@ class TaskQueue:
             if task.deadline <= time:
                 yield task
 
-                
-
 
 def from_args(args, tasks):
     """
@@ -174,6 +172,15 @@ def from_args(args, tasks):
     return simulated_time, system_tick, q
 
 
+def add_to_pd(df, task, start, finish):
+    return pd.concat([df, pd.DataFrame(
+        {'Task': [task.name], 
+         'Start': [start], 
+         'Finish': [finish],
+         'Resource': [f"{task.name}({task.cost}, {task.period})"]
+        }
+    )])
+
 # Configura o parser de argumentos da linha de comando
 parser = argparse.ArgumentParser(description='Simula um escalonador de tarefas')
 parser.add_argument('--file', '-f', type=str, required=True, help='Caminho para o arquivo de entrada')
@@ -195,7 +202,7 @@ missed_tasks = []
 
 # Adiciona tasks em tempo 0,0 só para aparecer no gráfico
 for task in tasks:
-    df = pd.concat([df, pd.DataFrame({'Task': [task.name], 'Start': [0], 'Finish': [0]})])
+    df = add_to_pd(df, task, 0, 0)
 
 while time < simulated_time:
     # Simula o tempo
@@ -205,7 +212,7 @@ while time < simulated_time:
     # Verifica se a tarefa atual terminou
     if current_task and current_task.remaining_time <= 0:
         current_task.end_task(time)
-        df = pd.concat([df, pd.DataFrame({'Task': [current_task.name], 'Start': [current_task.started_at], 'Finish': [time]})])
+        df = add_to_pd(df, current_task, current_task.started_at, time)
         current_task = None
 
      # Verifica se alguma tarefa perdeu o deadline
@@ -233,20 +240,16 @@ while time < simulated_time:
             print(f"{next_task} < {current_task}")
             current_task.interrupt_task(time, system_tick)
             q.put(current_task) # Coloca a tarefa atual de volta na fila
-            df = pd.concat([df, pd.DataFrame({'Task': [current_task.name], 'Start': [current_task.started_at], 'Finish': [time]})])
+            df = add_to_pd(df, current_task, current_task.started_at, time)
             current_task = next_task
             current_task.run_task(time)
             q.get()
-
-
-
     time += system_tick
 
 # Se ainda há uma tarefa, finaliza e adiciona ao dataframe
 if current_task:
     current_task.end_task(time)
-    df = pd.concat([df, pd.DataFrame({'Task': [current_task.name], 'Start': [current_task.started_at], 'Finish': [time]})])
-    #print(f"Task {current_task.name} finished at {time}")
+    df = add_to_pd(df, current_task, current_task.started_at, time)
 
 # Verifica se há tarefas para exibir
 if df.empty:
@@ -256,8 +259,14 @@ if df.empty:
 # Define uma lista de cores em formato RGB para diferenciar visualmente as tarefas no gráfico.
 color_rotation = ['rgb(0, 0, 255)', 'rgb(122, 122, 122)', 'rgb(255, 0, 0)', 'rgb(122, 122, 0)', 'rgb(255, 0, 255)', 'rgb(0, 255, 255)']
 colors = {task.name: color_rotation[i % len(color_rotation)] for i, task in enumerate(tasks)}
-fig = ff.create_gantt(df, bar_width = 0.4, show_colorbar=True,  group_tasks=True, index_col='Task', showgrid_x=True,
-                      colors=colors)                       
+fig = ff.create_gantt(df, 
+                      bar_width = 0.4, 
+                      show_colorbar=True,  
+                      group_tasks=True, 
+                      index_col='Task', 
+                      showgrid_x=True,
+                      colors=colors,
+                      )                       
 subtitle = "<b>Tasks:</b> " + ", ".join([f"<span style='color:{colors[task.name]}'>{task.name}({task.cost}, {task.period})</span>" for task in tasks])
 
 
@@ -268,9 +277,10 @@ else:
                      
 fig.update_layout(
     xaxis_type='linear',
-    autosize=False,
-    width=800,
-    height=400,
+    #autosize=False,
+    width=900,
+    height=600,
+    #margin=dict(t=100, b=100),
     title={
         'text': f"<b>{title}</b>",
         'y':0.9,
@@ -280,30 +290,45 @@ fig.update_layout(
     },
     annotations=[
         dict(
-            x=0.5,
-            y=-0.15,
+            x=0,
+            y=1.15,
             xref='paper',
             yref='paper',
-            text=subtitle,
+            text=subtitle + f"<br><b>▼:</b> Deadline Perdido",
             showarrow=False,
-            font=dict(size=12)
-        )
+            font=dict(size=12),
+            align='left'
+        ),
     ],
     xaxis=dict(
         tickmode='array',
         tickvals=[period for task in tasks for period in range(0, simulated_time, task.period)],
-        ticktext=[str(period) for task in tasks for period in range(0, simulated_time, task.period)]
+        ticktext=[str(period) for task in tasks for period in range(0, simulated_time, task.period)],
+        rangeslider=dict( # Adiciona um slider para zoom
+            visible=simulated_time >= 30,
+            
+            ),  #
+        range=(0, min(30 * system_tick, simulated_time)),
+        #autorange=False  # Previne o zoom automático
+    ),
+   # Custom legend names
+    legend_title_text='Tasks',
+    legend_traceorder='reversed',
+    legend=dict(
+        title='Tasks',
+        font=dict(
+            family='sans-serif',
+            size=12,
+            color='black'
+        ),
+        # change legend names
+
     )
 )
 
-fig.add_annotation(
-    xref='paper', yref='paper',
-    x=0.5, y=-0.25,
-    text='<b>▼:</b> Deadline Perdido',
-    showarrow=False,
-    font=dict(size=12),
-    align='left'
-)
+# Add padding at the bottom of the chart
+fig.update_yaxes(automargin=True)
+
 
 # Adiciona linhas verticais no gráfico para indicar os períodos de cada tarefa:
 for i, task in enumerate(tasks):
@@ -326,12 +351,48 @@ for missed_task, time in missed_tasks:
     # Calcula a posição do triângulo baseado na tarefa que falhou
     task_position = next(((len(tasks) - i -0.75) for i, task in enumerate(tasks) if task.name == missed_task.name), 0)  # Aqui você pode ajustar a posição com base na tarefa
 
+    m1,m2 = deadline_time-0.2 * system_tick, task_position-0.2
+    l1,l2 = deadline_time+0.2 * system_tick, task_position-0.2
+    z1,z2 = deadline_time, task_position-0.4
+    
+    print(f"m1: {m1}, m2: {m2}")
+    print(f"l1: {l1}, l2: {l2}")
+    print(f"z1: {z1}, z2: {z2}")
+
     fig.add_shape(
         type="path",
-        path=f'M {deadline_time-0.2}, {task_position-0.2} L {deadline_time+0.2}, {task_position-0.2} L {deadline_time}, {task_position-0.4} Z',
+        xref="x",
+        path=f"M {m1},{m2} L {l1},{l2} L {z1},{z2} Z",
         fillcolor=colors[missed_task.name],
         line=dict(color='black', width=1),
     )
+
+# fig.update_layout(
+#     yaxis=dict(scaleanchor="x"),
+# )
+
+# Create animation for the chart
+fig.update_layout(
+    updatemenus=[
+        dict(
+            type="buttons",
+            showactive=False,
+            buttons=[
+                dict(
+                    label="Play",
+                    method="animate",
+                    args=[None, dict(frame=dict(duration=1000, redraw=True), fromcurrent=True)],
+                ),
+                dict(
+                    label="Pause",
+                    method="animate",
+                    args=[[None], dict(frame=dict(duration=0, redraw=True), mode="immediate")],
+                ),
+            ],
+        )
+    ],
+)
+
 
 # Save the figure png
 fig.show()

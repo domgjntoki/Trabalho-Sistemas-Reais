@@ -51,10 +51,17 @@ nome_tarefa2 custo2 periodo2
 ```
 
 
-## Exemplo
+### Exemplo
 ```bash
 T1 30 100
 T2 35 175
 T3 25 200
 T4 30 300
 ```
+
+# Imagens do programa em funcionamento
+# Modo interativo
+No modo interativo, que é o padrão a menos que você especifique uma saída em imagem com a opção `--output`, é possível aplicar zoom no gráfico, selecionar tarefas específicas para exibição e utilizar a barra de rolagem inferior para navegar pela timeline completa, especialmente útil em simulações de longa duração.
+![Modo interativo](read_me_images/exemplo2.png)
+## Modo saída de imagem
+![Saída em imagem](read_me_images/exemplo1.png)

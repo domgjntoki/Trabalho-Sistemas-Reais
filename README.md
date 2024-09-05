@@ -12,6 +12,7 @@ pip install -r requirements.txt
 
 # Execução
 ## Argumentos para o programa
+Digite `python main.py -h` para instruções:
 ```bash
 usage: main.py [-h] --file FILE [--time TIME] [--tick TICK] [--algorithm {rm,edf}] [--output OUTPUT]
 

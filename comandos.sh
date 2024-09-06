@@ -1,3 +1,4 @@
+#/bin/bash
 # Earliest deadline first, exemplo padrão
 python main.py -f in2 -t 30 -a edf
 

@@ -154,7 +154,6 @@ def from_args(args, tasks):
     else:
         # O tick deve ser por padrão o maior divisor comum dos periodos e custos
         system_tick =  math.gcd(*[task.period for task in tasks] + [task.cost for task in tasks])
-    print("Tick do sistema:", system_tick)
 
 
     q = TaskQueue()

@@ -56,7 +56,8 @@ class Task:
             time (int): Tempo atual do sistema.
             system_tick (int): Duração do tick do sistema.
         """
-        self.remaining_time -= time - self.started_at + system_tick    
+        pass
+        #self.remaining_time -= time - self.started_at + system_tick    
 
     def end_task(self, time: int) -> None:
         """
@@ -164,6 +165,7 @@ def from_args(args, tasks):
     else:
         # O tick deve ser por padrão o maior divisor comum dos periodos e custos
         system_tick =  math.gcd(*[task.period for task in tasks] + [task.cost for task in tasks])
+    print("Tick do sistema:", system_tick)
 
 
     q = TaskQueue()
@@ -282,13 +284,13 @@ subtitle = "<b>Tarefas:</b> " + ", ".join([f"<span style='color:{colors[task.nam
 if args.algorithm == "rm":
     title = "Rate Monotonic"
 else:
-    title = "Deadline Driven"
+    title = "Earliest Deadline First"
 
 scale = math.gcd(*[task.period for task in tasks] + [task.cost for task in tasks])                 
 fig.update_layout(
     xaxis_type='linear',
     #autosize=False,
-    width=900 if not args.output else 900 * simulated_time // 30,
+    width=900 if not args.output else 900 * (simulated_time // system_tick // 30 + 1),
     height=600,
     #margin=dict(t=100, b=100),
     title={
@@ -318,7 +320,7 @@ fig.update_layout(
             visible=simulated_time >= 30 * scale and not args.output,
             
             ),  #
-        range=(0, min(30 * scale, simulated_time)) if not args.output else (0, simulated_time),
+        range=(0, min(30 * scale, simulated_time * scale)) if not args.output else (0, simulated_time),
         #autorange=False  # Previne o zoom automático
     ),
    # Custom legend names

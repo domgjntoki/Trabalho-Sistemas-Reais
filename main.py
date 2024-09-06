@@ -283,7 +283,8 @@ if args.algorithm == "rm":
     title = "Rate Monotonic"
 else:
     title = "Deadline Driven"
-                     
+
+scale = math.gcd(*[task.period for task in tasks] + [task.cost for task in tasks])                 
 fig.update_layout(
     xaxis_type='linear',
     #autosize=False,
@@ -314,10 +315,10 @@ fig.update_layout(
         tickvals=[period for task in tasks for period in range(0, simulated_time, task.period)],
         ticktext=[str(period) for task in tasks for period in range(0, simulated_time, task.period)],
         rangeslider=dict( # Adiciona um slider para zoom
-            visible=simulated_time >= 30 * system_tick and not args.output,
+            visible=simulated_time >= 30 * scale and not args.output,
             
             ),  #
-        range=(0, min(30 * system_tick, simulated_time)) if not args.output else (0, simulated_time),
+        range=(0, min(30 * scale, simulated_time)) if not args.output else (0, simulated_time),
         #autorange=False  # Previne o zoom automático
     ),
    # Custom legend names
@@ -359,8 +360,8 @@ for missed_task, time in missed_tasks:
     # Calcula a posição do triângulo baseado na tarefa que falhou
     task_position = next(((len(tasks) - i -0.75) for i, task in enumerate(tasks) if task.name == missed_task.name), 0)  # Aqui você pode ajustar a posição com base na tarefa
 
-    m1,m2 = deadline_time-0.2 * system_tick, task_position-0.2
-    l1,l2 = deadline_time+0.2 * system_tick, task_position-0.2
+    m1,m2 = deadline_time-0.2 * scale, task_position-0.2
+    l1,l2 = deadline_time+0.2 * scale, task_position-0.2
     z1,z2 = deadline_time, task_position-0.4
 
     fig.add_shape(
@@ -374,6 +375,6 @@ for missed_task, time in missed_tasks:
 
 # Save the figure png
 if args.output:
-    fig.write_image(args.output)
+    fig.write_image(args.output, engine="kaleido")
 else:
     fig.show()

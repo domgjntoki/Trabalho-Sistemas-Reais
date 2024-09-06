@@ -48,17 +48,6 @@ class Task:
         if self.remaining_time == 0:
             self.remaining_time = self.cost
 
-    def interrupt_task(self, time: int, system_tick: int) -> None:
-        """
-        Interrompe a tarefa e compensa o tempo que ela já rodou.
-
-        Args:
-            time (int): Tempo atual do sistema.
-            system_tick (int): Duração do tick do sistema.
-        """
-        pass
-        #self.remaining_time -= time - self.started_at + system_tick    
-
     def end_task(self, time: int) -> None:
         """
         Finaliza a tarefa, zerando o tempo restante.
@@ -249,7 +238,6 @@ while time < simulated_time:
     if not q.empty():
         next_task = q.peek()
         if next_task < current_task:
-            current_task.interrupt_task(time, system_tick)
             q.put(current_task) # Coloca a tarefa atual de volta na fila
             df = add_to_pd(df, current_task, current_task.started_at, time)
             current_task = next_task

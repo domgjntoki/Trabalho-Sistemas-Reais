@@ -276,7 +276,7 @@ fig = ff.create_gantt(df,
                       showgrid_x=True,
                       colors=colors,
                       )                       
-subtitle = "<b>Tasks:</b> " + ", ".join([f"<span style='color:{colors[task.name]}'>{task.name}({task.cost}, {task.period})</span>" for task in tasks])
+subtitle = "<b>Tarefas:</b> " + ", ".join([f"<span style='color:{colors[task.name]}'>{task.name}({task.cost}, {task.period})</span>" for task in tasks])
 
 
 if args.algorithm == "rm":
@@ -301,7 +301,7 @@ fig.update_layout(
     annotations=[
         dict(
             x=0,
-            y=1.15,
+            y=1.0,
             xref='paper',
             yref='paper',
             text=subtitle + f"<br><b>▼:</b> Deadline Perdido",
@@ -322,10 +322,10 @@ fig.update_layout(
         #autorange=False  # Previne o zoom automático
     ),
    # Custom legend names
-    legend_title_text='Tasks',
+    legend_title_text='Tarefas',
     legend_traceorder='reversed',
     legend=dict(
-        title='Tasks',
+        title='Tarefas',
         font=dict(
             family='sans-serif',
             size=12,

@@ -1,4 +1,4 @@
-kaleido==0.2.1
+kaleido==0.1.0.post1
 numpy==2.1.0
 packaging==24.1
 pandas==2.2.2
